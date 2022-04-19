@@ -1,0 +1,10 @@
+{% extends 'accounts/base.html' %}
+
+{% block content %}
+    <form id="signup_form" method="POST" action="{% url 'user_signup' %}"
+          enctype="multipart/form-data" class="form">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button>Submit</button>
+    </form>
+{% endblock %}

@@ -4,8 +4,10 @@ from django.shortcuts import redirect
 
 
 class AccountAllower:
-    """Class-decorator for views that allow only
-    special type of account to access view."""
+    """
+    Class-decorator for views that allow only
+    special type of account to access view.
+    """
     def __init__(self, redirect_url: str, allow_to: str):
         self.redirect_url = redirect_url
         self.allow_to = allow_to

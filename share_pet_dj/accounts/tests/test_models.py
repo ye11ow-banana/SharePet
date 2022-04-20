@@ -1,11 +1,13 @@
 import shutil
 import time
 
+from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 
-from accounts.models import Account
+from accounts.models import Account, Setting
 from config.settings import MEDIA_ROOT
+
 
 TEST_DIR = 'test_data'
 
@@ -63,6 +65,62 @@ class TestAccountModel(TestCase):
 
         self.assertEquals(str(account1), account1.username)
         self.assertEquals(str(account2), account2.email)
+
+
+class TestSettingModel(TestCase):
+    """Test `Setting` model."""
+    def setUp(self):
+        self.Account = get_user_model()
+        self.account = self.Account.objects.create()
+
+    def test_create(self):
+        """Setting instance is created correctly."""
+        setting = Setting.objects.create(account=self.account)
+
+        self.assertEquals(Setting.objects.count(), 1)
+        self.assertEquals(setting.account, self.account)
+        self.assertEquals(setting.language, 'en')
+        self.assertEquals(setting.status, 'alone_is_fine')
+
+    def test_db_table_name(self):
+        """
+        Model instance must have db table
+        with particular name.
+        """
+        setting = Setting.objects.create(account=self.account)
+        self.assertEquals(setting._meta.db_table, 'setting')
+
+    def test_ordering(self):
+        """Model instances must be ordered by account date_joined."""
+        Setting.objects.create(account=self.account)
+        account2 = self.Account.objects.create()
+        setting2 = Setting.objects.create(account=account2)
+
+        last_setting = Setting.objects.last()
+
+        self.assertEquals(last_setting, setting2)
+
+        account3 = self.Account.objects.create(
+            date_joined=self.account.date_joined)
+        Setting.objects.create(account=account3)
+
+        last_setting = Setting.objects.last()
+
+        self.assertEquals(last_setting, setting2)
+
+    def test_conversion_to_string(self):
+        """
+        Model instance must be cast to a string type
+        in the form of account username or email, whichever exists.
+        """
+        account1 = self.Account.objects.create(username='username1')
+        account2 = self.Account.objects.create(email='email2')
+
+        setting1 = Setting.objects.create(account=account1)
+        setting2 = Setting.objects.create(account=account2)
+
+        self.assertEquals(str(setting1), account1.username)
+        self.assertEquals(str(setting2), account2.email)
 
 
 def tearDownModule():

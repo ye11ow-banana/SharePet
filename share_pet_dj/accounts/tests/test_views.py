@@ -1,8 +1,8 @@
 import shutil
 import time
 
-from allauth.account.forms import (EmailAwarePasswordResetTokenGenerator,
-                                   LoginForm)
+from allauth.account.forms import (
+    EmailAwarePasswordResetTokenGenerator, LoginForm)
 from allauth.account.models import EmailAddress, EmailConfirmation
 from allauth.account.utils import user_pk_to_url_str
 

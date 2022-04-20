@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from django_resized import ResizedImageField
 
 from accounts.managers import AccountManager
+from config.settings import AUTH_USER_MODEL
 
 
 class Account(AbstractUser):
@@ -19,8 +20,8 @@ class Account(AbstractUser):
     """
     username_validator = UnicodeUsernameValidator()
 
-    avatar = ResizedImageField(upload_to='accounts/%Y/%m/%d',
-                               blank=True, null=True)
+    avatar = ResizedImageField(
+        _('avatar'), upload_to='accounts/%Y/%m/%d', blank=True, null=True)
     username = models.CharField(
         _('username'), max_length=150, unique=True, blank=True, null=True,
         help_text=_(
@@ -54,3 +55,32 @@ class Account(AbstractUser):
 
     def __str__(self):
         return self.username or self.email
+
+
+class Setting(models.Model):
+    """Settings of an account."""
+    LANGUAGES = (
+        ('ua', _('Ukrainian')),
+        ('en', _('English')),
+        ('ru', _('Russian'))
+    )
+    STATUS = (
+        ('actively_looking', _('actively looking')),
+        ('alone_is_fine', _('alone is fine'))
+    )
+
+    account = models.OneToOneField(
+        AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name=_('account'))
+    language = models.CharField(
+        _('language'), choices=LANGUAGES, default='en', max_length=50)
+    status = models.CharField(
+        _('status'), choices=LANGUAGES, default='alone_is_fine', max_length=50)
+
+    class Meta:
+        db_table = 'setting'
+        ordering = 'account',
+        verbose_name = _('setting')
+        verbose_name_plural = _('settings')
+
+    def __str__(self):
+        return str(self.account)

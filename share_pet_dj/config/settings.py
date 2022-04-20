@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'django_cleanup.apps.CleanupConfig',
+    'djcelery_email',
 
     'accounts.apps.AccountsConfig',
     'notifications.apps.NotificationsConfig',
@@ -130,6 +131,7 @@ MEDIA_URL = '/media/'
 
 DJANGORESIZED_DEFAULT_QUALITY = 75
 
+EMAIL_BACKEND = 'djcelery_email.backends.CeleryEmailBackend'
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
@@ -148,3 +150,12 @@ ACCOUNT_USERNAME_BLACKLIST = 'ye11ow_banana',
 ACCOUNT_USER_DISPLAY = lambda user: user.username or user.email
 ACCOUNT_USERNAME_MIN_LENGTH = 3
 ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
+
+REDIS_HOST = os.getenv('REDIS_HOST')
+REDIS_PORT = os.getenv('REDIS_PORT')
+
+CELERY_BROKER_URL = f'redis://{REDIS_HOST}:{REDIS_PORT}/0'
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    'visibility_timeout': 3600
+}
+CELERY_RESULT_BACKEND = f'redis://{REDIS_HOST}:{REDIS_PORT}/0'

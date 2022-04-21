@@ -4,11 +4,6 @@ from django.views.generic import TemplateView
 class Handler500View(TemplateView):
     template_name = 'core/500.html'
 
-    def dispatch(self, request, *args, **kwargs):
-        response = super().dispatch(request, *args, **kwargs)
-        response.status_code = 500
-        return response
-
 
 class Handler404View(TemplateView):
     template_name = 'core/404.html'

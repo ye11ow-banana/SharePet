@@ -4,7 +4,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django_resized import ResizedImageField
 
-from accounts.managers import AccountManager
+from .managers import AccountManager
 from config.settings import AUTH_USER_MODEL
 
 

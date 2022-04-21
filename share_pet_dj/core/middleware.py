@@ -1,7 +1,7 @@
 # import logging
 # logger = logging.Logger(__name__)
 
-from core.service_pages import handler500
+from core.pages import handler500
 
 
 class Process500:

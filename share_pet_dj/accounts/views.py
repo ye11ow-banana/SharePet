@@ -16,10 +16,8 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
 
-from accounts.forms import (
-    ResetPasswordForm, SignupAdministratorForm, SignupUserForm)
-from accounts.services.changed_allauth import (
-    AdministratorSignup, ContextDataMixin)
+from .forms import ResetPasswordForm, SignupAdministratorForm, SignupUserForm
+from .services.changed_allauth import AdministratorSignup, ContextDataMixin
 from core.decorators import account_allower
 
 

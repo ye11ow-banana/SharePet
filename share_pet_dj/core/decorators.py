@@ -15,13 +15,15 @@ class AccountAllower:
     def __call__(self, view_func):
         @wraps(view_func)
         def check(request, *args, **kwargs):
-            if request.user.is_authenticated:
+            account = request.user
+            if account.is_authenticated:
                 match self.allow_to:
                     case 'user':
-                        if not request.user.is_administrator:
+                        if (not account.is_administrator and
+                                not account.is_superuser):
                             return view_func(request, *args, **kwargs)
                     case 'admin':
-                        if request.user.is_superuser:
+                        if account.is_superuser:
                             return view_func(request, *args, **kwargs)
             elif self.allow_to == 'anonymous':
                 return view_func(request, *args, **kwargs)

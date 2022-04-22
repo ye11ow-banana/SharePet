@@ -5,11 +5,11 @@ from accounts.models import Setting
 from notifications.models import Notification
 
 
-class TestNotificationModel(TestCase):
-    """Test `Notification` model."""
-    def setUp(self):
-        self.Account = get_user_model()
-        self.account = self.Account.objects.create()
+class NotificationModelTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.Account = get_user_model()
+        cls.account = get_user_model().objects.create()
 
     def test_create(self):
         """Notification instance is created correctly."""

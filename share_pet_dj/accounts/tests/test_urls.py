@@ -4,8 +4,7 @@ from django.urls import resolve, reverse
 from accounts import views
 
 
-class TestUrls(SimpleTestCase):
-    """Test urls routers of `accounts` app."""
+class UrlsTest(SimpleTestCase):
     def test_user_signup_url_is_resolved(self):
         url = reverse('user_signup')
         self.assertEquals(resolve(url).func, views.signup_user)

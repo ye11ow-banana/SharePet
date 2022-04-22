@@ -16,19 +16,31 @@ from config.settings import MEDIA_ROOT
 TEST_DIR = 'test_data'
 
 
-class TestSignupUserView(TestCase):
-    """Test `signup_user` view."""
+class SignupUserViewTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.Account = Account = get_user_model()
+
+        cls.account = account = Account.objects.create(username='username1')
+        account.set_password('password_')
+        account.save()
+
+        cls.url = reverse('user_signup')
+        cls.file_name = 'test'
+
     def setUp(self):
-        self.Account = get_user_model()
         self.client = Client()
-        self.url = reverse('user_signup')
-
-        self.account = self.Account.objects.create(username='username1')
-        self.account.set_password('password_')
-        self.account.save()
-
-        self.file_name = 'test'
         self.file_path = f'{MEDIA_ROOT}/tests/{self.file_name}.jpg'
+
+    def tearDown(self):
+        """
+        Delete TEST_DIR after test functions
+        working with files.
+        """
+        try:
+            shutil.rmtree(TEST_DIR)
+        except OSError:
+            pass
 
     def test_GET(self):
         """Anonymous account sends GET request."""
@@ -147,17 +159,20 @@ class TestSignupUserView(TestCase):
         self.assertEquals(self.Account.objects.count(), 1)
 
 
-class TestPasswordResetView(TestCase):
-    """Test `password_reset` view."""
-    def setUp(self):
-        self.Account = get_user_model()
-        self.client = Client()
-        self.url = reverse('password_reset')
+class PasswordResetViewTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.Account = Account = get_user_model()
 
-        self.user = self.Account.objects.create(
+        cls.user = user = Account.objects.create(
             username='username1', email='email1@gmail.com')
-        self.user.set_password('password_')
-        self.user.save()
+        user.set_password('password_')
+        user.save()
+
+        cls.url = reverse('password_reset')
+
+    def setUp(self):
+        self.client = Client()
 
     def test_GET(self):
         """Anonymous account sends GET request."""
@@ -229,16 +244,17 @@ class TestPasswordResetView(TestCase):
         self.assertRedirects(response, reverse('profile'), 302)
 
 
-class TestPasswordResetDoneView(TestCase):
-    """Test `password_reset_done` view."""
-    def setUp(self):
-        self.Account = get_user_model()
-        self.client = Client()
-        self.url = reverse('account_reset_password_done')
+class PasswordResetDoneViewTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.url = reverse('account_reset_password_done')
 
-        self.account = self.Account.objects.create(username='username1')
-        self.account.set_password('password_')
-        self.account.save()
+        cls.account = account = get_user_model().objects.create(username='username1')
+        account.set_password('password_')
+        account.save()
+
+    def setUp(self):
+        self.client = Client()
 
     def test_GET(self):
         """Anonymous account sends GET request."""
@@ -268,16 +284,17 @@ class TestPasswordResetDoneView(TestCase):
         self.assertRedirects(response, reverse('profile'), 302)
 
 
-class TestPasswordResetFromKeyView(TestCase):
-    """Test `password_reset_from_key` view."""
+class PasswordResetFromKeyViewTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.account = account = get_user_model().objects.create(
+            email='email@gmail.com')
+        account.set_password('password_')
+        account.save()
+
     @override_settings(ACCOUNT_RATE_LIMITS={'reset_password_email': '6/m'})
     def setUp(self):
-        self.Account = get_user_model()
         self.client = Client()
-
-        self.account = self.Account.objects.create(email='email@gmail.com')
-        self.account.set_password('password_')
-        self.account.save()
 
         self.client.post(reverse('password_reset'),
                          {'email': self.account.email})
@@ -375,16 +392,17 @@ class TestPasswordResetFromKeyView(TestCase):
         self.assertRedirects(response, reverse('profile'), 302)
 
 
-class TestPasswordResetFromKeyDoneView(TestCase):
-    """Test `password_reset_from_key_done` view."""
-    def setUp(self):
-        self.Account = get_user_model()
-        self.client = Client()
-        self.url = reverse('account_reset_password_from_key_done')
+class PasswordResetFromKeyDoneViewTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.url = reverse('account_reset_password_from_key_done')
 
-        self.account = self.Account.objects.create(username='username1')
-        self.account.set_password('password_')
-        self.account.save()
+        cls.account = account = get_user_model().objects.create(username='username1')
+        account.set_password('password_')
+        account.save()
+
+    def setUp(self):
+        self.client = Client()
 
     def test_GET(self):
         """Anonymous account sends GET request."""
@@ -415,21 +433,23 @@ class TestPasswordResetFromKeyDoneView(TestCase):
         self.assertRedirects(response, reverse('profile'), 302)
 
 
-class TestPasswordChangeView(TestCase):
-    """Test `change_password` view."""
-    def setUp(self):
-        self.Account = get_user_model()
-        self.client = Client()
-        self.url = reverse('password_change')
+class PasswordChangeViewTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.Account = Account = get_user_model()
+        cls.url = reverse('password_change')
 
-        self.user = self.Account.objects.create(username='username1')
-        self.user.set_password('password_')
-        self.user.save()
+        cls.user = user = Account.objects.create(username='username1')
+        user.set_password('password_')
+        user.save()
 
-        self.account = self.Account.objects.create(
+        cls.account = account = Account.objects.create(
             username='username2', is_administrator=True)
-        self.account.set_password('password_')
-        self.account.save()
+        account.set_password('password_')
+        account.save()
+
+    def setUp(self):
+        self.client = Client()
 
     def test_GET(self):
         """Anonymous account sends GET request."""
@@ -517,17 +537,18 @@ class TestPasswordChangeView(TestCase):
                              'You must type the same password each time.')
 
 
-class TestLoginView(TestCase):
-    """Test `login` view."""
-    def setUp(self):
-        self.Account = get_user_model()
-        self.client = Client()
-        self.url = reverse('login')
+class LoginViewTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.url = reverse('login')
 
-        self.account = self.Account.objects.create(username='username1',
-                                                   email='email1')
-        self.account.set_password('password_')
-        self.account.save()
+        cls.account = account = get_user_model().objects.create(
+            username='username1', email='email1')
+        account.set_password('password_')
+        account.save()
+
+    def setUp(self):
+        self.client = Client()
 
     def test_GET(self):
         """Anonymous account sends GET request."""
@@ -652,16 +673,17 @@ class TestLoginView(TestCase):
         self.assertRedirects(response, reverse('profile'), 302)
 
 
-class TestLogoutView(TestCase):
-    """Test `logout` view."""
-    def setUp(self):
-        self.Account = get_user_model()
-        self.client = Client()
-        self.url = reverse('logout')
+class LogoutViewTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.url = reverse('logout')
 
-        self.account = self.Account.objects.create(username='username1')
-        self.account.set_password('password_')
-        self.account.save()
+        cls.account = account = get_user_model().objects.create(username='username1')
+        account.set_password('password_')
+        account.save()
+
+    def setUp(self):
+        self.client = Client()
 
     def test_GET(self):
         response = self.client.get(reverse('logout'))
@@ -683,21 +705,23 @@ class TestLogoutView(TestCase):
         self.assertNotIn('_auth_user_id', self.client.session)
 
 
-class TestSignupAdministratorView(TestCase):
-    """Test `signup_administrator` view."""
-    def setUp(self):
-        self.Account = get_user_model()
-        self.client = Client()
-        self.url = reverse('administrator_signup')
+class SignupAdministratorViewTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.Account = Account = get_user_model()
+        cls.url = reverse('administrator_signup')
 
-        self.account = self.Account.objects.create(username='username1')
-        self.account.set_password('password_')
-        self.account.save()
+        cls.account = account = Account.objects.create(username='username1')
+        account.set_password('password_')
+        account.save()
 
-        self.admin = self.Account.objects.create(
+        cls.admin = admin = Account.objects.create(
             username='admin', is_staff=True, is_superuser=True)
-        self.admin.set_password('password_')
-        self.admin.save()
+        admin.set_password('password_')
+        admin.save()
+
+    def setUp(self):
+        self.client = Client()
 
     def test_GET(self):
         """Anonymous non-admin account sends GET request."""
@@ -844,16 +868,18 @@ class TestSignupAdministratorView(TestCase):
         self.assertTrue(account.check_password(data['password1']))
 
 
-class TestEmailVerificationSentView(TestCase):
-    """Test `email_verification_sent` view."""
-    def setUp(self):
-        self.Account = get_user_model()
-        self.client = Client()
-        self.url = reverse('account_email_verification_sent')
+class EmailVerificationSentViewTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.url = reverse('account_email_verification_sent')
 
-        self.account = self.Account.objects.create(username='username1')
-        self.account.set_password('password_')
-        self.account.save()
+        cls.account = account = get_user_model().objects.create(
+            username='username1')
+        account.set_password('password_')
+        account.save()
+
+    def setUp(self):
+        self.client = Client()
 
     def test_GET(self):
         """Anonymous account sends GET request."""
@@ -884,29 +910,29 @@ class TestEmailVerificationSentView(TestCase):
         self.assertEquals(response.status_code, 405)
 
 
-class TestConfirmEmailView(TestCase):
-    """Test `confirm_email` view."""
-    def setUp(self):
-        self.Account = get_user_model()
-        self.client = Client()
+class ConfirmEmailViewTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.account = account = get_user_model().objects.create(email='email1')
+        account.set_password('password_')
+        account.save()
 
-        self.account = self.Account.objects.create(email='email1')
-        self.account.set_password('password_')
-        self.account.save()
-
-        self.email_address = EmailAddress.objects.create(
-            user=self.account,
-            email=self.account.email
+        email_address = EmailAddress.objects.create(
+            user=account,
+            email=account.email
         )
-        self.email_confirmation = EmailConfirmation.create(
-            email_address=self.email_address)
-        self.email_confirmation.sent = self.email_confirmation.created
-        self.email_confirmation.save()
+        email_confirmation = EmailConfirmation.create(
+            email_address=email_address)
+        email_confirmation.sent = email_confirmation.created
+        email_confirmation.save()
 
-        self.url = reverse(
+        cls.url = reverse(
             'account_confirm_email',
-            args=[self.email_confirmation.key]
+            args=[email_confirmation.key]
         )
+
+    def setUp(self):
+        self.client = Client()
 
     def test_GET(self):
         """Anonymous account sends GET request."""
@@ -935,14 +961,3 @@ class TestConfirmEmailView(TestCase):
         response = self.client.post(self.url)
 
         self.assertRedirects(response, reverse('login'), 302)
-
-
-def tearDownModule():
-    """
-    Delete `TEST_DIR` after test functions
-    working with files.
-    """
-    try:
-        shutil.rmtree(TEST_DIR)
-    except OSError:
-        pass

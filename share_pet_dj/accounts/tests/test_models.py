@@ -12,12 +12,24 @@ from config.settings import MEDIA_ROOT
 TEST_DIR = 'test_data'
 
 
-class TestAccountModel(TestCase):
-    """Test `Account` model."""
+class AccountModelTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.account = Account.objects.create()
+        cls.file_name = 'test'
+
     def setUp(self):
-        self.file_name = 'test'
         self.file_path = f'{MEDIA_ROOT}/tests/{self.file_name}.jpg'
-        self.account = Account.objects.create()
+
+    def tearDown(self):
+        """
+        Delete TEST_DIR after test functions
+        working with files.
+        """
+        try:
+            shutil.rmtree(TEST_DIR)
+        except OSError:
+            pass
 
     @override_settings(MEDIA_ROOT=(TEST_DIR + '/media'))
     def test_image_upload_path(self):
@@ -67,11 +79,11 @@ class TestAccountModel(TestCase):
         self.assertEquals(str(account2), account2.email)
 
 
-class TestSettingModel(TestCase):
-    """Test `Setting` model."""
-    def setUp(self):
-        self.Account = get_user_model()
-        self.account = self.Account.objects.create()
+class SettingModelTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.Account = get_user_model()
+        cls.account = get_user_model().objects.create()
 
     def test_create(self):
         """Setting instance is created correctly."""
@@ -121,14 +133,3 @@ class TestSettingModel(TestCase):
 
         self.assertEquals(str(setting1), account1.username)
         self.assertEquals(str(setting2), account2.email)
-
-
-def tearDownModule():
-    """
-    Delete TEST_DIR after test functions
-    working with files.
-    """
-    try:
-        shutil.rmtree(TEST_DIR)
-    except OSError:
-        pass

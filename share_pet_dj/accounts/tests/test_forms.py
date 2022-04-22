@@ -8,10 +8,12 @@ from accounts.forms import (
 from config.settings import MEDIA_ROOT
 
 
-class TestSignupUserForm(TestCase):
-    """Test `SignupUserForm` with different datas."""
+class SignupUserFormTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.file_name = 'test'
+
     def setUp(self):
-        self.file_name = 'test'
         self.file_path = f'{MEDIA_ROOT}/tests/{self.file_name}.jpg'
 
     def test_valid_data(self):
@@ -71,12 +73,10 @@ class TestSignupUserForm(TestCase):
                           ['This field is required.'])
 
 
-class TestResetPasswordForm(TestCase):
-    """Test `ResetPasswordForm` with different datas."""
-    def setUp(self):
-        Account = get_user_model()
-
-        self.administrator = Account.objects.create(
+class ResetPasswordFormTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.administrator = get_user_model().objects.create(
             email='administrator@gmail.com', is_administrator=True)
 
     def test_valid_data(self):
@@ -112,8 +112,7 @@ class TestResetPasswordForm(TestCase):
                           ['You cannot reset your password.'])
 
 
-class TestSignupAdministratorForm(TestCase):
-    """Test `SignupAdministratorForm` with different datas."""
+class SignupAdministratorFormTest(TestCase):
     def test_valid_data(self):
         """Test form working with correct full data."""
         form = SignupAdministratorForm(data={

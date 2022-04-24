@@ -9,6 +9,10 @@ from django.contrib.auth import get_user_model
 from django.contrib.sites.shortcuts import get_current_site
 from django.urls import reverse
 
+from core.exceptions import FormSaveError
+from .infrastructure import AccountData
+from .services.service import ResetPasswordService, ProfileSettings
+
 
 class SignupUserForm(AllauthSignupForm, forms.ModelForm):
     """Registration form for regular user."""
@@ -24,8 +28,9 @@ class SignupUserForm(AllauthSignupForm, forms.ModelForm):
         file = self.cleaned_data['avatar']
 
         if file is not None:
-            user.avatar.save(file.name, file, save=True)
-            user.save()
+            AccountData().update_avatar(user, file.name, file, save=True)
+
+        ProfileSettings().create_profile_settings(account=user)
 
         return user
 
@@ -44,8 +49,8 @@ class SignupAdministratorForm(AllauthSignupForm, forms.ModelForm):
 
     def save(self, request):
         administrator = super().save(request)
-        administrator.is_administrator = True
-        administrator.save()
+        AccountData().update(administrator.pk, is_administrator=True)
+        ProfileSettings().create_profile_settings(account=administrator)
 
         return administrator
 
@@ -55,14 +60,13 @@ class ResetPasswordForm(AllauthResetPasswordForm):
     def clean(self):
         """Reset password can only user."""
         cleaned_data = super().clean()
-
-        accounts = get_user_model().objects.filter(
+        reset_password_service = ResetPasswordService(
             email=cleaned_data.get('email'))
 
-        for account in accounts:
-            if account.is_administrator or account.is_superuser:
-                self.add_error(
-                    'email', _('You cannot reset your password.'))
+        try:
+            reset_password_service.raise_exception_if_not_user()
+        except FormSaveError as e:
+            self.add_error('email', _(str(e)))
 
         return cleaned_data
 

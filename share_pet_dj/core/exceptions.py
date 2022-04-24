@@ -3,3 +3,7 @@ class CreateInstanceError(Exception):
     def __init__(self, class_name: str):
         super().__init__(f'Instance of the class `{class_name}` '
                          f'cannot be created.')
+
+
+class FormSaveError(Exception):
+    """Is raised when sth wrong in `save` method of form."""

@@ -74,7 +74,7 @@ class Setting(models.Model):
     language = models.CharField(
         _('language'), choices=LANGUAGES, default='en', max_length=50)
     status = models.CharField(
-        _('status'), choices=LANGUAGES, default='alone_is_fine', max_length=50)
+        _('status'), choices=STATUS, default='alone_is_fine', max_length=50)
 
     class Meta:
         db_table = 'setting'

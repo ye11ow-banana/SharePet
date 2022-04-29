@@ -1,0 +1,23 @@
+{% extends 'accounts/base.html' %}
+
+{% block content %}
+    {% if success %}
+        <h3>You have changed profile successfully!</h3>
+    {% endif %}
+
+    <form action="{% url 'profile' %}" method="POST">
+        {% csrf_token %}
+        {{ account_form.as_p }}
+        <button name="form-type" value="account_form">Change Account</button>
+    </form>
+    <form action="{% url 'profile' %}" method="POST">
+        {% csrf_token %}
+        {{ setting_form.as_p }}
+        <button name="form-type" value="setting_form">Change Settings</button>
+    </form>
+    <form action="{% url 'profile' %}" method="POST">
+        {% csrf_token %}
+        {{ notification_form.as_p }}
+        <button name="form-type" value="notification_form">Change Notifications</button>
+    </form>
+{% endblock %}

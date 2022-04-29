@@ -4,12 +4,13 @@ from django.test import TestCase
 from accounts.models import Setting
 from notifications.models import Notification
 
+Account = get_user_model()
+
 
 class NotificationModelTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.Account = get_user_model()
-        cls.account = get_user_model().objects.create()
+        cls.account = Account.objects.create()
 
     def test_create(self):
         """Notification instance is created correctly."""
@@ -47,7 +48,7 @@ class NotificationModelTest(TestCase):
         """Model instances must be ordered by account date_joined."""
         setting1 = Setting.objects.create(account=self.account)
         Notification.objects.create(setting=setting1)
-        account2 = self.Account.objects.create()
+        account2 = Account.objects.create()
         setting2 = Setting.objects.create(account=account2)
         notification2 = Notification.objects.create(setting=setting2)
 
@@ -55,7 +56,7 @@ class NotificationModelTest(TestCase):
 
         self.assertEquals(last_notification, notification2)
 
-        account3 = self.Account.objects.create(
+        account3 = Account.objects.create(
             date_joined=self.account.date_joined)
         setting3 = Setting.objects.create(account=account3)
         Notification.objects.create(setting=setting3)
@@ -69,8 +70,8 @@ class NotificationModelTest(TestCase):
         Model instance must be cast to a string type
         in the form of account username or email, whichever exists.
         """
-        account1 = self.Account.objects.create(username='username1')
-        account2 = self.Account.objects.create(email='email2')
+        account1 = Account.objects.create(username='username1')
+        account2 = Account.objects.create(email='email2')
 
         setting1 = Setting.objects.create(account=account1)
         setting2 = Setting.objects.create(account=account2)

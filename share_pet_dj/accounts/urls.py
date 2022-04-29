@@ -27,5 +27,5 @@ urlpatterns = [
          name='account_email_verification_sent'),
     re_path(r'^confirm-email/(?P<key>[-:\w]+)/$', views.confirm_email,
             name='account_confirm_email'),
-    path('profile/', views.check, name='profile'),
+    path('profile/', views.profile, name='profile'),
 ]

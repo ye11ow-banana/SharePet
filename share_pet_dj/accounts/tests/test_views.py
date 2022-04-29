@@ -11,7 +11,11 @@ from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from accounts.forms import SignupAdministratorForm, SignupUserForm
+from accounts.models import Setting
 from config.settings import MEDIA_ROOT
+from notifications.models import Notification
+
+Account = get_user_model()
 
 TEST_DIR = 'test_data'
 
@@ -19,11 +23,11 @@ TEST_DIR = 'test_data'
 class SignupUserViewTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.Account = Account = get_user_model()
-
         cls.account = account = Account.objects.create(username='username1')
         account.set_password('password_')
         account.save()
+        setting = Setting.objects.create(account=account)
+        Notification.objects.create(setting=setting)
 
         cls.url = reverse('user_signup')
         cls.file_name = 'test'
@@ -78,9 +82,9 @@ class SignupUserViewTest(TestCase):
 
         self.assertRedirects(
             response, reverse('account_email_verification_sent'), 302)
-        self.assertEquals(self.Account.objects.count(), 2)
+        self.assertEquals(Account.objects.count(), 2)
 
-        account = self.Account.objects.last()
+        account = Account.objects.last()
         self.assertFalse(account.is_administrator)
         self.assertEquals(account.username, data['username'])
         self.assertEquals(account.email, data['email'])
@@ -137,7 +141,7 @@ class SignupUserViewTest(TestCase):
         )
         self.assertFormError(response, 'form', 'password2',
                              'This field is required.')
-        self.assertEquals(self.Account.objects.count(), 1)
+        self.assertEquals(Account.objects.count(), 1)
 
     def test_authenticated_POST(self):
         """
@@ -156,18 +160,18 @@ class SignupUserViewTest(TestCase):
         response = self.client.post(self.url, data=data)
 
         self.assertRedirects(response, reverse('profile'), 302)
-        self.assertEquals(self.Account.objects.count(), 1)
+        self.assertEquals(Account.objects.count(), 1)
 
 
 class PasswordResetViewTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.Account = Account = get_user_model()
-
         cls.user = user = Account.objects.create(
             username='username1', email='email1@gmail.com')
         user.set_password('password_')
         user.save()
+        setting = Setting.objects.create(account=user)
+        Notification.objects.create(setting=setting)
 
         cls.url = reverse('password_reset')
 
@@ -222,7 +226,7 @@ class PasswordResetViewTest(TestCase):
         Anonymous account sends POST
         request with non-user email.
         """
-        account = self.Account.objects.create(email='email2@gmail.com',
+        account = Account.objects.create(email='email2@gmail.com',
                                               is_administrator=True)
         account.set_password('password_')
         account.save()
@@ -249,9 +253,11 @@ class PasswordResetDoneViewTest(TestCase):
     def setUpTestData(cls):
         cls.url = reverse('account_reset_password_done')
 
-        cls.account = account = get_user_model().objects.create(username='username1')
+        cls.account = account = Account.objects.create(username='username1')
         account.set_password('password_')
         account.save()
+        setting = Setting.objects.create(account=account)
+        Notification.objects.create(setting=setting)
 
     def setUp(self):
         self.client = Client()
@@ -287,10 +293,12 @@ class PasswordResetDoneViewTest(TestCase):
 class PasswordResetFromKeyViewTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.account = account = get_user_model().objects.create(
+        cls.account = account = Account.objects.create(
             email='email@gmail.com')
         account.set_password('password_')
         account.save()
+        setting = Setting.objects.create(account=account)
+        Notification.objects.create(setting=setting)
 
     @override_settings(ACCOUNT_RATE_LIMITS={'reset_password_email': '6/m'})
     def setUp(self):
@@ -397,9 +405,11 @@ class PasswordResetFromKeyDoneViewTest(TestCase):
     def setUpTestData(cls):
         cls.url = reverse('account_reset_password_from_key_done')
 
-        cls.account = account = get_user_model().objects.create(username='username1')
+        cls.account = account = Account.objects.create(username='username1')
         account.set_password('password_')
         account.save()
+        setting = Setting.objects.create(account=account)
+        Notification.objects.create(setting=setting)
 
     def setUp(self):
         self.client = Client()
@@ -436,17 +446,20 @@ class PasswordResetFromKeyDoneViewTest(TestCase):
 class PasswordChangeViewTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.Account = Account = get_user_model()
         cls.url = reverse('password_change')
 
         cls.user = user = Account.objects.create(username='username1')
         user.set_password('password_')
         user.save()
+        setting = Setting.objects.create(account=user)
+        Notification.objects.create(setting=setting)
 
         cls.account = account = Account.objects.create(
             username='username2', is_administrator=True)
         account.set_password('password_')
         account.save()
+        setting = Setting.objects.create(account=account)
+        Notification.objects.create(setting=setting)
 
     def setUp(self):
         self.client = Client()
@@ -455,7 +468,7 @@ class PasswordChangeViewTest(TestCase):
         """Anonymous account sends GET request."""
         response = self.client.get(self.url)
 
-        self.assertRedirects(response, reverse('profile'), 302)
+        self.assertRedirects(response, reverse('profile'), 302, 302)
 
     def test_authenticated_as_user_GET(self):
         """Authenticated user sends GET request."""
@@ -482,7 +495,7 @@ class PasswordChangeViewTest(TestCase):
 
         response = self.client.post(self.url, data=data)
 
-        self.assertRedirects(response, reverse('profile'), 302)
+        self.assertRedirects(response, reverse('profile'), 302, 302)
 
     def test_authenticated_as_user_POST(self):
         """Authenticated user sends POST request."""
@@ -497,7 +510,7 @@ class PasswordChangeViewTest(TestCase):
 
         self.assertRedirects(response, reverse('profile'), 302)
         self.assertTrue(
-            self.Account.objects.get(
+            Account.objects.get(
                 pk=self.user.pk).check_password('_password_')
         )
 
@@ -542,10 +555,12 @@ class LoginViewTest(TestCase):
     def setUpTestData(cls):
         cls.url = reverse('login')
 
-        cls.account = account = get_user_model().objects.create(
+        cls.account = account = Account.objects.create(
             username='username1', email='email1')
         account.set_password('password_')
         account.save()
+        setting = Setting.objects.create(account=account)
+        Notification.objects.create(setting=setting)
 
     def setUp(self):
         self.client = Client()
@@ -678,7 +693,7 @@ class LogoutViewTest(TestCase):
     def setUpTestData(cls):
         cls.url = reverse('logout')
 
-        cls.account = account = get_user_model().objects.create(username='username1')
+        cls.account = account = Account.objects.create(username='username1')
         account.set_password('password_')
         account.save()
 
@@ -708,7 +723,6 @@ class LogoutViewTest(TestCase):
 class SignupAdministratorViewTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.Account = Account = get_user_model()
         cls.url = reverse('administrator_signup')
 
         cls.account = account = Account.objects.create(username='username1')
@@ -766,7 +780,7 @@ class SignupAdministratorViewTest(TestCase):
 
         self.assertRedirects(response, reverse('login'), status_code=302,
                              fetch_redirect_response=False)
-        self.assertEquals(self.Account.objects.count(), 2)
+        self.assertEquals(Account.objects.count(), 2)
 
     def test_authenticated_as_non_admin_POST(self):
         """
@@ -785,7 +799,7 @@ class SignupAdministratorViewTest(TestCase):
 
         self.assertRedirects(response, reverse('login'), status_code=302,
                              fetch_redirect_response=False)
-        self.assertEquals(self.Account.objects.count(), 2)
+        self.assertEquals(Account.objects.count(), 2)
 
     def test_authenticated_as_admin_POST_no_data(self):
         """Authenticated admin sends POST request without data."""
@@ -805,7 +819,7 @@ class SignupAdministratorViewTest(TestCase):
                              'This field is required.')
         self.assertFormError(response, 'form', 'password2',
                              'This field is required.')
-        self.assertEquals(self.Account.objects.count(), 2)
+        self.assertEquals(Account.objects.count(), 2)
 
     def test_authenticated_as_admin_POST_invalid_data(self):
         """Authenticated admin sends POST request with incorrect data."""
@@ -837,7 +851,7 @@ class SignupAdministratorViewTest(TestCase):
         )
         self.assertFormError(response, 'form', 'password2',
                              'This field is required.')
-        self.assertEquals(self.Account.objects.count(), 2)
+        self.assertEquals(Account.objects.count(), 2)
 
     def test_authenticated_as_admin_POST(self):
         """
@@ -858,9 +872,9 @@ class SignupAdministratorViewTest(TestCase):
 
         self.assertRedirects(response,
                              reverse('account_email_verification_sent'), 302)
-        self.assertEquals(self.Account.objects.count(), 3)
+        self.assertEquals(Account.objects.count(), 3)
 
-        account = self.Account.objects.last()
+        account = Account.objects.last()
         self.assertTrue(account.is_administrator)
         self.assertEquals(account.email, data['email'])
         self.assertEquals(account.first_name, data['first_name'])
@@ -873,7 +887,7 @@ class EmailVerificationSentViewTest(TestCase):
     def setUpTestData(cls):
         cls.url = reverse('account_email_verification_sent')
 
-        cls.account = account = get_user_model().objects.create(
+        cls.account = account = Account.objects.create(
             username='username1')
         account.set_password('password_')
         account.save()
@@ -913,7 +927,7 @@ class EmailVerificationSentViewTest(TestCase):
 class ConfirmEmailViewTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.account = account = get_user_model().objects.create(email='email1')
+        cls.account = account = Account.objects.create(email='email1')
         account.set_password('password_')
         account.save()
 

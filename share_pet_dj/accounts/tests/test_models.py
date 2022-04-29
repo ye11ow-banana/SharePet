@@ -1,7 +1,6 @@
 import shutil
 import time
 
-from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 
@@ -82,8 +81,8 @@ class AccountModelTest(TestCase):
 class SettingModelTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.Account = get_user_model()
-        cls.account = get_user_model().objects.create()
+        cls.Account = Account
+        cls.account = Account.objects.create()
 
     def test_create(self):
         """Setting instance is created correctly."""

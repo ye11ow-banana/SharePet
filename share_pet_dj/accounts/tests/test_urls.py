@@ -60,4 +60,4 @@ class UrlsTest(SimpleTestCase):
 
     def test_profile_url_is_resolved(self):
         url = reverse('profile')
-        self.assertEquals(resolve(url).func, views.check)
+        self.assertEquals(resolve(url).func, views.profile)

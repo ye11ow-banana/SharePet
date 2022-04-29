@@ -7,6 +7,8 @@ from accounts.forms import (
 )
 from config.settings import MEDIA_ROOT
 
+Account = get_user_model()
+
 
 class SignupUserFormTest(TestCase):
     @classmethod
@@ -76,7 +78,7 @@ class SignupUserFormTest(TestCase):
 class ResetPasswordFormTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.administrator = get_user_model().objects.create(
+        cls.administrator = Account.objects.create(
             email='administrator@gmail.com', is_administrator=True)
 
     def test_valid_data(self):

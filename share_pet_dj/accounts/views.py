@@ -6,10 +6,10 @@ from allauth.account.views import (
     PasswordResetView as AllauthPasswordResetView,
     SignupView as AllauthSignupView
 )
+from django.contrib.auth.decorators import login_required
 
 from django.contrib.auth.views import LogoutView
 from django.db import transaction
-from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
@@ -19,6 +19,7 @@ from django.views.generic import TemplateView
 from .forms import ResetPasswordForm, SignupAdministratorForm, SignupUserForm
 from .services.changed_allauth import AdministratorSignup, ContextDataMixin
 from core.decorators import account_allower
+from .services.mixins import ProfileMixin
 
 
 @method_decorator(transaction.atomic, name='dispatch')
@@ -104,6 +105,11 @@ class PasswordChangeView(AllauthPasswordChangeView):
     success_url = reverse_lazy('profile')
 
 
+@method_decorator(login_required, name='dispatch')
+class ProfileView(ProfileMixin, TemplateView):
+    template_name = 'accounts/profile.html'
+
+
 signup_user = UserSignupView.as_view()
 signup_administrator = AdministratorSignupView.as_view()
 email_verification_sent = EmailVerificationSentView.as_view()
@@ -115,9 +121,4 @@ password_reset_done = PasswordResetDoneView.as_view()
 password_reset_from_key = PasswordResetFromKeyView.as_view()
 password_reset_from_key_done = PasswordResetFromKeyDoneView.as_view()
 change_password = PasswordChangeView.as_view()
-
-
-def check(_):
-    if _.user.is_authenticated:
-        return HttpResponse('Yes')
-    return HttpResponse('No')
+profile = ProfileView.as_view()

@@ -7,3 +7,7 @@ class CreateInstanceError(Exception):
 
 class FormSaveError(Exception):
     """Is raised when sth wrong in `save` method of form."""
+
+
+class AccountDoesNotExist(Exception):
+    pass

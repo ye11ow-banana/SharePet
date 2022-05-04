@@ -11,3 +11,7 @@ class FormSaveError(Exception):
 
 class AccountDoesNotExist(Exception):
     pass
+
+
+class EmptyMessage(Exception):
+    pass

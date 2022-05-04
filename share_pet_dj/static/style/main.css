@@ -57,3 +57,17 @@ button {
 .errorlist {
     color: #c63f3f;
 }
+
+.chat {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.message {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}

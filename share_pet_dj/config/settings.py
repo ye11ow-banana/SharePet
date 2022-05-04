@@ -27,9 +27,11 @@ INSTALLED_APPS = [
     'allauth.account',
     'django_cleanup.apps.CleanupConfig',
     'djcelery_email',
+    'channels',
 
     'accounts.apps.AccountsConfig',
     'notifications.apps.NotificationsConfig',
+    'chats.apps.ChatsConfig',
 ]
 
 MIDDLEWARE = [
@@ -62,6 +64,7 @@ TEMPLATES = [
     },
 ]
 
+ASGI_APPLICATION = 'config.asgi.application'
 WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
@@ -155,6 +158,15 @@ ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
 
 REDIS_HOST = os.getenv('REDIS_HOST')
 REDIS_PORT = os.getenv('REDIS_PORT')
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [(REDIS_HOST, REDIS_PORT)],
+        },
+    },
+}
 
 CELERY_BROKER_URL = f'redis://{REDIS_HOST}:{REDIS_PORT}/0'
 CELERY_BROKER_TRANSPORT_OPTIONS = {

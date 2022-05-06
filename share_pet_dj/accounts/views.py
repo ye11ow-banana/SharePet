@@ -10,7 +10,7 @@ from django.contrib.auth.decorators import login_required
 
 from django.contrib.auth.views import LogoutView
 from django.db import transaction
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
@@ -19,7 +19,7 @@ from django.views.generic import TemplateView
 from .forms import ResetPasswordForm, SignupAdministratorForm, SignupUserForm
 from .services.changed_allauth import AdministratorSignup, ContextDataMixin
 from core.decorators import account_allower
-from .services.mixins import ProfileMixin
+from .services.services import ProfileService
 
 
 @method_decorator(transaction.atomic, name='dispatch')
@@ -106,8 +106,31 @@ class PasswordChangeView(AllauthPasswordChangeView):
 
 
 @method_decorator(login_required, name='dispatch')
-class ProfileView(ProfileMixin, TemplateView):
+class ProfileView(TemplateView):
+    _profile_service = ProfileService()
     template_name = 'accounts/profile.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        profile_forms = self._profile_service.get_profile_forms(
+            pk=self.request.user.pk)
+        context.update(profile_forms)
+
+        return context
+
+    def post(self, request):
+        data = request.POST.dict()
+        form_name = data['form-type']
+        del data['csrfmiddlewaretoken']
+        del data['form-type']
+
+        context = self._profile_service.execute(
+            pk=request.user.pk,
+            form_name=form_name,
+            data_to_update=data
+        )
+
+        return render(request, 'accounts/profile.html', context)
 
 
 signup_user = UserSignupView.as_view()

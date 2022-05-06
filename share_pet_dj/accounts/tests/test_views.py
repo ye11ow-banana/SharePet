@@ -226,8 +226,8 @@ class PasswordResetViewTest(TestCase):
         Anonymous account sends POST
         request with non-user email.
         """
-        account = Account.objects.create(email='email2@gmail.com',
-                                              is_administrator=True)
+        account = Account.objects.create(
+            email='email2@gmail.com', is_administrator=True)
         account.set_password('password_')
         account.save()
 

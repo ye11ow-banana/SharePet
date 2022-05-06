@@ -4,6 +4,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django_resized import ResizedImageField
 
+from notifications.models import Notification
 from .managers import AccountManager
 from config.settings import AUTH_USER_MODEL
 
@@ -55,6 +56,13 @@ class Account(AbstractUser):
 
     def __str__(self):
         return self.username or self.email
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if not self.pk:
+            setting = Setting.objects.create(account=self)
+            Notification.objects.create(setting=setting)
 
 
 class Setting(models.Model):

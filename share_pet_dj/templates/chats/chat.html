@@ -1,0 +1,23 @@
+{% extends 'chats/base.html' %}
+{% load static %}
+
+{% block content %}
+    {{ chat.name }}
+    <div class="chat">
+        {% for message in chat.message_set.all %}
+        <div class="message">
+            <i>{{ message.date_sent }}</i>
+            {{ message.text }}
+            <b>{{ message.sender }}</b>
+        </div>
+        {% endfor %}
+    </div>
+    <form action="" method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button>Send message!</button>
+    </form>
+    <button id="send-button">Send js message!</button>
+    {{ chat.slug|json_script:"room-name" }}
+    {{ user.username|json_script:"sender" }}
+{% endblock %}

@@ -2,6 +2,7 @@ from allauth.account.adapter import get_adapter
 from allauth.account.forms import ResetPasswordForm as AllauthResetPasswordForm
 from allauth.account.forms import SignupForm as AllauthSignupForm
 from allauth.utils import build_absolute_uri
+from django.contrib.auth.validators import UnicodeUsernameValidator
 
 from django.utils.translation import gettext_lazy as _
 from django import forms
@@ -9,9 +10,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.sites.shortcuts import get_current_site
 from django.urls import reverse
 
-from core.exceptions import FormSaveError, AccountDoesNotExist
-from .models import Setting
-from .services import services
+from .services.repository import AccountRepository
+
 
 Account = get_user_model()
 
@@ -28,12 +28,10 @@ class SignupUserForm(AllauthSignupForm, forms.ModelForm):
     def save(self, request):
         user = super().save(request)
         file = self.cleaned_data['avatar']
-        profile_service = services.ProfileService()
+        account_repository = AccountRepository()
 
         if file is not None:
-            profile_service.update_avatar(user, file.name, file, save=True)
-
-        profile_service.create_profile_settings(account=user)
+            account_repository.update_avatar(user, file.name, file, save=True)
 
         return user
 
@@ -52,11 +50,10 @@ class SignupAdministratorForm(AllauthSignupForm, forms.ModelForm):
 
     def save(self, request):
         administrator = super().save(request)
-        profile_service = services.ProfileService()
+        account_repository = AccountRepository()
 
-        profile_service.update_account(
+        account_repository.update_fields_by_pk(
             administrator.pk, is_administrator=True)
-        profile_service.create_profile_settings(account=administrator)
 
         return administrator
 
@@ -66,14 +63,17 @@ class ResetPasswordForm(AllauthResetPasswordForm):
     def clean(self):
         """Reset password can only user."""
         cleaned_data = super().clean()
-        reset_password_service = services.ResetPasswordService()
+        account_repository = AccountRepository()
 
         try:
-            reset_password_service.raise_exception_if_not_user(
+            account = account_repository.get_pure_account(
                 email=cleaned_data.get('email')
             )
-        except FormSaveError as e:
-            self.add_error('email', _(str(e)))
+        except Account.DoesNotExist:
+            pass
+        else:
+            if account.is_administrator or account.is_staff:
+                self.add_error('email', _('You cannot reset your password.'))
 
         return cleaned_data
 
@@ -89,31 +89,43 @@ class ResetPasswordForm(AllauthResetPasswordForm):
             'account/email/unknown_account', email, context)
 
 
-class AccountForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['email'].widget.attrs['readonly'] = True
+class AccountForm(forms.Form):
+    username_validator = UnicodeUsernameValidator()
 
-    def clean(self):
-        cleaned_data = super().clean()
-        profile_service = services.ProfileService()
-
-        try:
-            profile_service.get_account(email=cleaned_data['email'])
-        except AccountDoesNotExist:
-            self.add_error('email', _('You cannot change email right here!'))
-
-        return cleaned_data
-
-    class Meta:
-        fields = (
-            'username', 'first_name',
-            'last_name', 'email', 'avatar',
-        )
-        model = Account
+    username = forms.CharField(
+        label=_('Username'),
+        max_length=150,
+        help_text=_(
+            'Required. 150 characters or fewer. '
+            'Letters, digits and @/./+/-/_ only.'
+        ),
+        validators=[username_validator],
+    )
+    email = forms.EmailField(
+        label=_('Email address'),
+        widget=forms.TextInput(attrs={'readonly': 'readonly'})
+    )
+    first_name = forms.CharField(label=_('First name'), max_length=150)
+    last_name = forms.CharField(label=_('Last name'), max_length=150)
+    avatar = forms.ImageField(label=_('Avatar'), required=False)
 
 
-class SettingForm(forms.ModelForm):
-    class Meta:
-        fields = 'language', 'status'
-        model = Setting
+class SettingForm(forms.Form):
+    LANGUAGES = (
+        ('ua', _('Ukrainian')),
+        ('en', _('English')),
+        ('ru', _('Russian'))
+    )
+    STATUS = (
+        ('actively_looking', _('actively looking')),
+        ('alone_is_fine', _('alone is fine'))
+    )
+
+    language = forms.ChoiceField(
+        label=_('Language'), choices=LANGUAGES,
+        widget=forms.Select()
+    )
+    status = forms.ChoiceField(
+        label=_('Status'), choices=STATUS,
+        widget=forms.Select()
+    )

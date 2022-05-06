@@ -5,9 +5,5 @@ class CreateInstanceError(Exception):
                          f'cannot be created.')
 
 
-class FormSaveError(Exception):
-    """Is raised when sth wrong in `save` method of form."""
-
-
-class AccountDoesNotExist(Exception):
+class EmptyMessage(Exception):
     pass

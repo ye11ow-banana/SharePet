@@ -1,0 +1,7 @@
+{% extends 'chats/base.html' %}
+
+{% block content %}
+    {% for chat in chat_list %}
+        <a href="{{ chat.get_absolute_url }}">{{ chat.name }}</a>
+    {% endfor %}
+{% endblock %}

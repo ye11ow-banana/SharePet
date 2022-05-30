@@ -14,7 +14,7 @@ class NotificationGet:
     """Logic for getting `Notification` model."""
     _model_object = ModelObject(Notification)
 
-    def get_notification(self, fields: tuple, **kwargs) -> dict:
+    def get_notification(self, fields: tuple, **kwargs: int) -> dict:
         return self._model_object.get_model_object(fields, **kwargs)
 
 

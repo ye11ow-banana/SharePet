@@ -4,11 +4,15 @@ application logic in the app.
 
 Repository + domain logic.
 """
-from typing import Callable
+from typing import Callable, Sequence, Literal
 
+from allauth.account.views import SignupView, sensitive_post_parameters_m
+from allauth.exceptions import ImmediateHttpResponse
 from django.contrib.auth import get_user_model
 from django.forms import BaseForm
+from django.views.generic import FormView
 
+from core.exceptions import NoKeyInResponseContextError
 from core.utils import FormUtil
 from notifications.forms import NotificationForm
 from notifications.services.repository import NotificationRepository
@@ -21,13 +25,10 @@ Account = get_user_model()
 
 class ProfileUpdate:
     """Logic for updating account profile."""
-    _account_repository = AccountRepository()
-    _setting_repository = SettingRepository()
-
     @staticmethod
     def _update(
             pk: int, data_to_update: dict,
-            update_method: Callable
+            update_method: Callable[[int, dict], None]
     ) -> None:
         update_method(pk, **data_to_update)
 
@@ -41,10 +42,10 @@ class ProfileGet:
     def _get_pk_by_form_name(self, pk: int, form_name: str) -> int:
         if 'setting' in form_name:
             pk = self._setting_repository.get_setting(
-                fields=('id',), account_id=pk).get('id')
+                fields=('id',), account_id=pk).get('id')#type: ignore
         elif 'notification' in form_name:
             pk = self._notification_repository.get_notification(
-                fields=('id',), setting__account_id=pk).get('id')
+                fields=('id',), setting__account_id=pk).get('id')#type: ignore
 
         return pk
 
@@ -124,10 +125,15 @@ class ProfileService(ProfileGet, ProfileUpdate):
 
     def _get_valid_data_errors(
             self, pk: int, data_to_update: dict
-    ) -> list[dict[str, str]]:
+    ) -> Sequence[
+        dict[
+            Literal['field'] | Literal['error_messages'],
+            str | Sequence[str]
+        ]
+    ] | Sequence:
         username = data_to_update.get('username')
         email = data_to_update.get('email')
-        errors = []
+        errors: list = []
 
         if username is None or email is None:
             return errors
@@ -175,7 +181,12 @@ class ProfileService(ProfileGet, ProfileUpdate):
 
         if not result:
             response_context.update({'success': False})
-            response_context.get(form_name)._errors = form.errors
+            form_instance: BaseForm | None = response_context.get(form_name)
+
+            if form_instance is None:
+                raise NoKeyInResponseContextError
+
+            form_instance._errors = form.errors
 
         return response_context
 
@@ -188,3 +199,19 @@ class ProfileService(ProfileGet, ProfileUpdate):
             self._update(pk_to_update, data_to_update, update_method)
 
         return self._create_response_context(pk, result, form, form_name)
+
+
+class AdministratorSignup(SignupView):
+    """Custom signup logic for `administrator` user."""
+    @sensitive_post_parameters_m
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Override the `dispatch` method deleting
+        `RedirectAuthenticatedUserMixin` from inheriting tree.
+        """
+        try:
+            if not self.is_open():
+                return self.closed()
+        except ImmediateHttpResponse as e:
+            return e.response
+        return FormView.dispatch(self, request, *args, **kwargs)

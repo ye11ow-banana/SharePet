@@ -5,5 +5,9 @@ class CreateInstanceError(Exception):
                          f'cannot be created.')
 
 
-class EmptyMessage(Exception):
-    pass
+class EmptyMessageError(Exception):
+    """Do not allow to send empty messages in `chats`."""
+
+
+class NoKeyInResponseContextError(KeyError):
+    """`KeyError` in `response_context` dict."""

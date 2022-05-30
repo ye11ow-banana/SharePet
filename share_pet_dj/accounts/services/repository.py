@@ -7,9 +7,10 @@ For example, Django ORM or sessions.
 from typing import Generator, Type
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.base_user import AbstractBaseUser
 
 from accounts.models import Setting
-from accounts.services.dataclasses import AccountData
+from accounts.services.data_structures import AccountData
 from core.repository import ModelObject
 
 Account = get_user_model()
@@ -38,11 +39,15 @@ class AccountGet:
     def get_pure_account(self, *args, **kwargs) -> Account:
         return self._model_object.get_pure_model_object(*args, **kwargs)
 
-    def get_all_with_fields(
-            self, fields: tuple
-    ) -> Generator[AccountData, None, None]:
-        for model in self._model_object.get_all_with_fields(fields):
-            yield model
+    @staticmethod
+    def get_all_with_fields(fields: tuple[str, str]) \
+            -> Generator[AccountData, None, None]:
+        for model in Account.objects.values(*fields):
+            # todo: other fields
+            yield AccountData(
+                pk=model.get('id'),
+                username=model.get('username'),
+            )
 
 
 class AccountRepository(AccountGet, AccountUpdate):

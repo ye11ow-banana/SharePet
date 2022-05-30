@@ -3,21 +3,21 @@ from django.views.generic import FormView
 
 from chats.forms import MessageForm
 from chats.models import Chat
-from core.exceptions import EmptyMessage
+from core.exceptions import EmptyMessageError
 
 
 class ChatDetailFormMixin(FormView):
     @staticmethod
     def _raise_if_message_empty(form: MessageForm) -> None:
         if not form.text and not form.file:
-            raise EmptyMessage
+            raise EmptyMessageError
 
     def form_valid(self, form):
         form = form.save(commit=False)
 
         try:
             self._raise_if_message_empty(form)
-        except EmptyMessage:
+        except EmptyMessageError:
             return super().form_valid(form)
 
         form.sender = self.request.user

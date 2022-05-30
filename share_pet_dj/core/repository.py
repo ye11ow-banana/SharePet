@@ -1,19 +1,25 @@
-from typing import Generator
+from typing import TypeVar
 
-from django.db.models.base import ModelBase
+from django.db.models.base import ModelBase, Model
 from django.forms import model_to_dict
 
-from accounts.services.dataclasses import AccountData
+T = TypeVar('T', bound=Model)
 
 
 class ModelObjectUpdate:
     """Logic for updating model object."""
+    def __init__(self, model: T):
+        self.model = model
+
     def update_fields_by_pk(self, pk: int, **kwargs) -> None:
         self.model.objects.filter(pk=pk).update(**kwargs)
 
 
 class ModelObjectGet:
     """Logic for getting model object."""
+    def __init__(self, model: T):
+        self.model = model
+
     def _get_model_object(self, *args, **kwargs) -> ModelBase:
         return self.model.objects.get(*args, **kwargs)
 
@@ -29,18 +35,6 @@ class ModelObjectGet:
     def get_pure_model_object(self, *args, **kwargs) -> ModelBase:
         return self._get_model_object(*args, **kwargs)
 
-    def get_all_with_fields(
-            self, fields: tuple
-    ) -> Generator[AccountData, None, None]:
-        for model in self.model.objects.values(*fields):
-            # todo: other fields
-            yield AccountData(
-                pk=model.get('id'),
-                username=model.get('username'),
-            )
-
 
 class ModelObject(ModelObjectGet, ModelObjectUpdate):
     """Logic for model object."""
-    def __init__(self, model: ModelBase):
-        self.model = model

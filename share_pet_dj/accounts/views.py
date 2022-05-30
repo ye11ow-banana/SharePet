@@ -17,9 +17,9 @@ from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
 
 from .forms import ResetPasswordForm, SignupAdministratorForm, SignupUserForm
-from .services.changed_allauth import AdministratorSignup, ContextDataMixin
 from core.decorators import account_allower
-from .services.services import ProfileService
+from .services.mixins import ContextDataMixin
+from .services.services import ProfileService, AdministratorSignup
 
 
 @method_decorator(transaction.atomic, name='dispatch')

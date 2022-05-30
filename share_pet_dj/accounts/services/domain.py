@@ -5,7 +5,7 @@ domain logic in the app.
 from typing import Generator, Sequence
 
 from config.settings import ACCOUNT_USERNAME_BLACKLIST
-from .dataclasses import AccountData
+from .data_structures import AccountData
 
 
 class AccountDomain:

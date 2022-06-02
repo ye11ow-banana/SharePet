@@ -7,9 +7,6 @@ locale/
 venv/
 todos.py
 setenv.sh
-runcelery.sh
-runserver.sh
-runtests.sh
 share_pet_djj/
 .mypy_cache/
 local_settings.py
